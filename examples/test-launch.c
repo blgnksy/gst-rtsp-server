@@ -16,7 +16,8 @@
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA 02110-1301, USA.
  */
-
+#include <stdio.h>
+#include <string.h>
 #include <gst/gst.h>
 
 #include <gst/rtsp-server/rtsp-server.h>
@@ -41,8 +42,11 @@ main (int argc, char *argv[])
   loop = g_main_loop_new (NULL, FALSE);
 
   /* create a server instance */
+  char address[20];
+  strcpy (address, "0.0.0.0:");
+  strcat (address, argv[1]);
   server = gst_rtsp_server_new ();
-
+  gst_rtsp_server_set_address (server, address);
   /* get the mount points for this server, every server has a default object
    * that be used to map uri mount points to media factories */
   mounts = gst_rtsp_server_get_mount_points (server);
@@ -54,8 +58,12 @@ main (int argc, char *argv[])
   factory = gst_rtsp_media_factory_new ();
   gst_rtsp_media_factory_set_launch (factory, argv[1]);
 
+  char mapping[5];
+  strcpy (mapping, "/");
+  strcat (mapping, argv[2]);
+
   /* attach the test factory to the /test url */
-  gst_rtsp_mount_points_add_factory (mounts, "/test", factory);
+  gst_rtsp_mount_points_add_factory (mounts, mapping, factory);
 
   /* don't need the ref to the mapper anymore */
   g_object_unref (mounts);
@@ -64,7 +72,7 @@ main (int argc, char *argv[])
   gst_rtsp_server_attach (server, NULL);
 
   /* start serving */
-  g_print ("stream ready at rtsp://127.0.0.1:8554/test\n");
+  g_print ("stream ready at rtsp://%s%s\n", address, mapping);
   g_main_loop_run (loop);
 
   return 0;
